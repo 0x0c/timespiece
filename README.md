@@ -17,3 +17,6 @@ t.resume();
 // stop repeating
 t.invalidate();
 ```
+
+## TODO
+- [ ] dispatch function in main thread.
