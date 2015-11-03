@@ -25,7 +25,6 @@ namespace timespiece
 			this->async = async;
 			this->completion_handler = completion_handler;
 			this->invalidated = false;
-			this->fired = false;
 		}
 
 		~watchdog() {}
