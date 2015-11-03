@@ -3,7 +3,6 @@
 #include <functional>
 #include <thread>
 #include <chrono>
-#include <vector>
 #include <mutex>
 
 namespace timespiece
