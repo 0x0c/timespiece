@@ -3,13 +3,15 @@
 
 int main(int argc, char const *argv[])
 {
-	timespiece::watchdog t(3 * 1000, true, true, [] {
+	bool finished = false;
+	timespiece::watchdog t(3 * 1000, false, true, [] {
 		std::cout << "dispatch" << std::endl;
-	}, [] {
+	}, [&finished] {
+		finished = true;
 		std::cout << "complete" << std::endl;
 	});
 	t.resume();
-	while (t.watch()) {}
+	while (!finished) {}
 
 	std::cout << "finish" << std::endl;
 

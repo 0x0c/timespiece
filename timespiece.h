@@ -13,10 +13,9 @@ namespace timespiece
 	private:
 		std::mutex mutex;
 		int wait;
-		bool watching;
 		bool repeat;
 		bool async;
-		bool fire;
+		bool invalidated;
 		std::function<void()> func;
 		std::function<void()> completion_handler;
 	public:
@@ -26,36 +25,24 @@ namespace timespiece
 			this->repeat = repeat;
 			this->async = async;
 			this->completion_handler = completion_handler;
-			this->watching = false;
+			this->invalidated = false;
 		}
 
-		~watchdog() {
-
-		}
-
-		bool watch() {
-			if (!this->watching && this->fire) {
-				this->completion_handler();
-				if (this->repeat) {
-					watching = true;
-					this->resume();
-				}
-			}
-			
-			return this->watching;
-		}
+		~watchdog() {}
 
 		void resume() {
-			this->watching = true;
 			if (this->async) {
 				std::thread([=]() {
-                	std::this_thread::sleep_for(std::chrono::milliseconds(wait));
-                	func();
-                	mutex.lock();
-                	this->fire = true;
-					this->watching = false;
-                	mutex.unlock();
-            	}).detach();
+					do {
+						std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+						mutex.lock();
+						if (!this->invalidated) {
+							func();
+						}
+						mutex.unlock();
+					} while (this->repeat);
+					this->completion_handler();
+				}).detach();
 			}
 			else {
 				std::this_thread::sleep_for(std::chrono::milliseconds(wait));
@@ -65,7 +52,8 @@ namespace timespiece
 		}
 
 		void invalidate() {
-			this->repeat = false;	
+			this->repeat = false;
+			this->invalidated = true;
 		}
 	};
 }
