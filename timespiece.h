@@ -35,7 +35,9 @@ namespace timespiece
 					do {
 						std::this_thread::sleep_for(std::chrono::milliseconds(wait));
 						mutex.lock();
-						func();
+						if (!this->invalidated) {
+							this->func();
+						}
 						mutex.unlock();
 					} while (!this->invalidated && this->repeat);
 					this->completion_handler();
