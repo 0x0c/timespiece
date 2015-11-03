@@ -26,6 +26,7 @@ namespace timespiece
 			this->async = async;
 			this->completion_handler = completion_handler;
 			this->invalidated = false;
+			this->fired = false;
 		}
 
 		~watchdog() {}
@@ -36,11 +37,9 @@ namespace timespiece
 					do {
 						std::this_thread::sleep_for(std::chrono::milliseconds(wait));
 						mutex.lock();
-						if (!this->invalidated) {
-							func();
-						}
+						func();
 						mutex.unlock();
-					} while (this->repeat);
+					} while (!this->invalidated && this->repeat);
 					this->completion_handler();
 				}).detach();
 			}
