@@ -75,9 +75,11 @@ namespace timespiece
 		}
 
 		void invalidate(int index) {
-			std::shared_ptr<timespiece::timer> t = this->timer.at(index);
-			t->invalidate();
-			this->timer.erase(this->timer.begin() + index);
+			if (!this->timer.empty()) {
+				std::shared_ptr<timespiece::timer> t = this->timer.at(index);
+				t->invalidate();
+				this->timer.erase(this->timer.begin() + index);	
+			}
 		}
 	};
 }
