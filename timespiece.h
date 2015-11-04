@@ -17,9 +17,9 @@ namespace timespiece
 		bool async;
 		bool invalidated;
 		std::function<void()> func;
-		std::function<void()> completion_handler;
+		std::function<void(std::string hash)> completion_handler;
 	public:
-		timer(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
+		timer(int duration, bool repeat, bool async, std::function<void()> func, std::function<void(std::string hash)> completion_handler) {
 			this->duration = duration;
 			this->repeat = repeat;
 			this->async = async;
@@ -29,6 +29,13 @@ namespace timespiece
 		};
 		~timer() {};
 		
+		std::string hash() {
+			std::ostringstream address;
+			address << (void const *)this;
+			std::string hash = address.str();
+			return hash;
+		}
+
 		void resume() {
 			if (this->invalidated) {
 				this->invalidated = false;
@@ -40,13 +47,13 @@ namespace timespiece
 								this->func();
 							}
 						} while (!this->invalidated && this->repeat);
-						this->completion_handler();
+						this->completion_handler(this->hash());
 					}).detach();
 				}
 				else {
 					std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 					this->func();
-					this->completion_handler();
+					this->completion_handler(this->hash());
 				}
 			}
 		}
@@ -59,28 +66,29 @@ namespace timespiece
 	class watchdog
 	{
 	private:
-		std::vector<std::shared_ptr<timespiece::timer> > timer;
+		std::string last_timer_hash;
+		std::map<std::string, std::shared_ptr<timespiece::timer> > timer;
 	public:
 		watchdog() {}
 		~watchdog() {}
 
 		void resume(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
-			int index = this->timer.size() + 1;
-			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, [&] {
+			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, [&, completion_handler] (std::string hash) {
 				completion_handler();
-				this->timer.erase(this->timer.begin() + index);	
+				this->timer.erase(hash);
 			}));
+			this->last_timer_hash = t->hash();
+			this->timer[t->hash()] = t;
 			t->resume();
-			this->timer.push_back(t);
 		}
 
 		void invalidate() {
-			this->invalidate(this->timer.size() - 1);
+			this->invalidate(this->last_timer_hash);
 		}
 
-		void invalidate(int index) {
-			if (!this->timer.empty() && this->timer.size() > index) {
-				std::shared_ptr<timespiece::timer> t = this->timer.at(index);
+		void invalidate(std::string hash) {
+			if (this->timer.find(hash) != this->timer.end()) {
+				std::shared_ptr<timespiece::timer> t = this->timer[hash];
 				t->invalidate();
 			}
 		}
