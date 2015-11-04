@@ -1,11 +1,14 @@
 #pragma once
 
+#include <string>
+#include <sstream>
 #include <vector>
 #include <functional>
 #include <memory>
 #include <map>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 namespace timespiece
 {
@@ -30,9 +33,10 @@ namespace timespiece
 		~timer() {};
 		
 		std::string hash() {
-			std::ostringstream address;
-			address << (void const *)this;
-			std::string hash = address.str();
+			const void * address = static_cast<const void*>(this);
+			std::stringstream ss;
+			ss << address;  
+			std::string hash = ss.str(); 
 			return hash;
 		}
 
@@ -72,7 +76,7 @@ namespace timespiece
 		watchdog() {}
 		~watchdog() {}
 
-		void resume(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
+		std::shared_ptr<timespiece::timer> resume(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
 			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, [&, completion_handler] (std::string hash) {
 				completion_handler();
 				this->timer.erase(hash);
@@ -80,6 +84,8 @@ namespace timespiece
 			this->last_timer_hash = t->hash();
 			this->timer[t->hash()] = t;
 			t->resume();
+			
+			return t;
 		}
 
 		void invalidate() {
