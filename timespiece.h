@@ -3,48 +3,44 @@
 #include <functional>
 #include <thread>
 #include <chrono>
-#include <mutex>
 
 namespace timespiece
 {
 	class watchdog
 	{
 	private:
-		std::mutex mutex;
-		int wait;
+		int duration;
 		bool repeat;
 		bool async;
 		bool invalidated;
 		std::function<void()> func;
 		std::function<void()> completion_handler;
 	public:
-		watchdog(int wait, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
-			this->wait = wait;
-			this->func = func;
+		watchdog(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
+			this->duration = duration;
 			this->repeat = repeat;
 			this->async = async;
-			this->completion_handler = completion_handler;
 			this->invalidated = false;
+			this->func = func;
+			this->completion_handler = completion_handler;
 		}
 
 		~watchdog() {}
 
 		void resume() {
 			if (this->async) {
-				std::thread([=]() {
+				std::thread([&]() {
 					do {
-						std::this_thread::sleep_for(std::chrono::milliseconds(wait));
-						mutex.lock();
+						std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 						if (!this->invalidated) {
 							this->func();
 						}
-						mutex.unlock();
 					} while (!this->invalidated && this->repeat);
 					this->completion_handler();
 				}).detach();
 			}
 			else {
-				std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+				std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 				this->func();
 				this->completion_handler();
 			}

@@ -7,9 +7,14 @@ int main(int argc, char const *argv[])
 	timespiece::watchdog t(3 * 1000, false, true, [] {
 		std::cout << "dispatch" << std::endl;
 	}, [&finished] {
-		finished = true;
+		if (finished == false){
+			finished = true;
+		}
 		std::cout << "complete" << std::endl;
 	});
+
+	std::cout << "start" << std::endl;	
+	
 	t.resume();
 	while (!finished) {}
 
