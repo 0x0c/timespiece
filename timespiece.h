@@ -65,7 +65,11 @@ namespace timespiece
 		~watchdog() {}
 
 		void resume(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
-			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, completion_handler));
+			int index = this->timer.size() + 1;
+			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, [&] {
+				completion_handler();
+				this->timer.erase(this->timer.begin() + index);	
+			}));
 			t->resume();
 			this->timer.push_back(t);
 		}
@@ -78,7 +82,6 @@ namespace timespiece
 			if (!this->timer.empty()) {
 				std::shared_ptr<timespiece::timer> t = this->timer.at(index);
 				t->invalidate();
-				this->timer.erase(this->timer.begin() + index);	
 			}
 		}
 	};
