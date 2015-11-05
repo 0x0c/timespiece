@@ -23,7 +23,7 @@ namespace timespiece
 		std::function<void(std::string hash)> completion_handler;
 	public:
 		int repeated_count;
-		
+
 		timer(int duration, bool repeat, bool async, std::function<void(int repeated_count, timespiece::timer *t)> func, std::function<void(std::string hash)> completion_handler) {
 			this->duration = duration;
 			this->repeated_count = 0;
@@ -34,12 +34,12 @@ namespace timespiece
 			this->completion_handler = completion_handler;
 		};
 		~timer() {};
-		
+
 		std::string hash() {
 			const void * address = static_cast<const void*>(this);
 			std::stringstream ss;
-			ss << address;  
-			std::string hash = ss.str(); 
+			ss << address;
+			std::string hash = ss.str();
 			return hash;
 		}
 
@@ -50,10 +50,10 @@ namespace timespiece
 					std::thread([&]() {
 						do {
 							std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+							this->repeated_count++;
 							if (!this->invalidated) {
 								this->func(this->repeated_count, this);
 							}
-							this->repeated_count++;
 						} while (!this->invalidated && this->repeat);
 						this->completion_handler(this->hash());
 					}).detach();
@@ -93,7 +93,7 @@ namespace timespiece
 			this->last_timer_hash = t->hash();
 			this->timer[t->hash()] = t;
 			t->resume();
-			
+
 			return t;
 		}
 
