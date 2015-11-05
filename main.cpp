@@ -8,7 +8,7 @@ int main(int argc, char const *argv[])
 
 	std::cout << "start" << std::endl;	
 
-	std::shared_ptr<timespiece::timer> timer = t.resume(3 * 1000, false, true, [] {
+	std::shared_ptr<timespiece::timer> timer = t.resume(3 * 1000, false, true, [] (int repeated_count, timespiece::timer *t) {
 		std::cout << "dispatch" << std::endl;
 	}, [&finished] {
 		if (finished == false){

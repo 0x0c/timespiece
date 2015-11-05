@@ -16,14 +16,16 @@ namespace timespiece
 	{
 	private:
 		int duration;
+		int repeated_count;
 		bool repeat;
 		bool async;
 		bool invalidated;
-		std::function<void()> func;
+		std::function<void(int repeated_count, timespiece::timer *t)> func;
 		std::function<void(std::string hash)> completion_handler;
 	public:
-		timer(int duration, bool repeat, bool async, std::function<void()> func, std::function<void(std::string hash)> completion_handler) {
+		timer(int duration, bool repeat, bool async, std::function<void(int repeated_count, timespiece::timer *t)> func, std::function<void(std::string hash)> completion_handler) {
 			this->duration = duration;
+			this->repeated_count = 0;
 			this->repeat = repeat;
 			this->async = async;
 			this->invalidated = true;
@@ -48,15 +50,19 @@ namespace timespiece
 						do {
 							std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 							if (!this->invalidated) {
-								this->func();
+								this->func(this->repeated_count, this);
 							}
 						} while (!this->invalidated && this->repeat);
 						this->completion_handler(this->hash());
 					}).detach();
 				}
 				else {
-					std::this_thread::sleep_for(std::chrono::milliseconds(duration));
-					this->func();
+					do {
+						std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+						if (!this->invalidated) {
+							this->func(this->repeated_count, this);
+						}
+					} while (!this->invalidated && this->repeat);
 					this->completion_handler(this->hash());
 				}
 			}
@@ -76,7 +82,7 @@ namespace timespiece
 		watchdog() {}
 		~watchdog() {}
 
-		std::shared_ptr<timespiece::timer> resume(int duration, bool repeat, bool async, std::function<void()> func, std::function<void()> completion_handler) {
+		std::shared_ptr<timespiece::timer> resume(int duration, bool repeat, bool async, std::function<void(int repeated_count, timespiece::timer *t)> func, std::function<void()> completion_handler) {
 			std::shared_ptr<timespiece::timer> t = std::make_shared<timespiece::timer>(timespiece::timer(duration, repeat, async, func, [&, completion_handler] (std::string hash) {
 				completion_handler();
 				this->timer.erase(hash);
