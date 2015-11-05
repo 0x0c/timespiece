@@ -4,12 +4,12 @@
 int main(int argc, char const *argv[])
 {
 	bool finished = false;
-	timespiece::watchdog t;
+	timespiece::watchdog w;
 
 	std::cout << "start" << std::endl;	
 
-	std::shared_ptr<timespiece::timer> timer = t.resume(3 * 1000, false, true, [] (int repeated_count, timespiece::timer *t) {
-		std::cout << "dispatch" << std::endl;
+	std::shared_ptr<timespiece::timer> timer = w.resume(3 * 1000, true, true, [] (int repeated_count, timespiece::timer *t) {
+		std::cout << "dispatch : " << t->repeated_count << std::endl;
 	}, [&finished] {
 		if (finished == false){
 			finished = true;

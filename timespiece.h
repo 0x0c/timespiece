@@ -16,13 +16,14 @@ namespace timespiece
 	{
 	private:
 		int duration;
-		int repeated_count;
 		bool repeat;
 		bool async;
 		bool invalidated;
 		std::function<void(int repeated_count, timespiece::timer *t)> func;
 		std::function<void(std::string hash)> completion_handler;
 	public:
+		int repeated_count;
+		
 		timer(int duration, bool repeat, bool async, std::function<void(int repeated_count, timespiece::timer *t)> func, std::function<void(std::string hash)> completion_handler) {
 			this->duration = duration;
 			this->repeated_count = 0;
@@ -52,6 +53,7 @@ namespace timespiece
 							if (!this->invalidated) {
 								this->func(this->repeated_count, this);
 							}
+							this->repeated_count++;
 						} while (!this->invalidated && this->repeat);
 						this->completion_handler(this->hash());
 					}).detach();
@@ -62,6 +64,7 @@ namespace timespiece
 						if (!this->invalidated) {
 							this->func(this->repeated_count, this);
 						}
+						this->repeated_count++;
 					} while (!this->invalidated && this->repeat);
 					this->completion_handler(this->hash());
 				}
