@@ -19,4 +19,4 @@ w.invalidate();
 ```
 
 ## TODO
-- [ ] dispatch function in main thread.
+- [x] dispatch function in main thread. → Use parallel_linse.(https://github.com/0x0c/parallel_lines)
