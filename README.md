@@ -11,7 +11,7 @@ timespiece::watchdog w;
 w.resume(3 * 1000, true, true, [] (int repeated_count, timespiece::timer *t) {
 	// do something
 }, [] {
-	// completion handler is called when finished
+	// completion handler will be called when finished
 });
 
 // invalidate
