@@ -63,7 +63,9 @@ namespace timespiece
 		cond.notify_one();
 	}
 
-	watchdog::watchdog() {}
+	watchdog::watchdog() {
+		this->last_timer_hash = "";
+	}
 	watchdog::~watchdog() {}
 
 	std::shared_ptr<timespiece::timer> watchdog::resume(int duration, bool repeat, bool async, std::function<void(int repeated_count, timespiece::timer *t)> func, std::function<void()> completion_handler) {
@@ -79,7 +81,9 @@ namespace timespiece
 	}
 
 	void watchdog::invalidate() {
-		this->invalidate(this->last_timer_hash);
+		if (this->last_timer_hash.length() > 0) {
+			this->invalidate(this->last_timer_hash);
+		}
 	}
 
 	void watchdog::invalidate(std::string hash) {
